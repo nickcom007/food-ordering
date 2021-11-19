@@ -1,55 +1,88 @@
 from typing import List
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import schema
+from sqlalchemy.orm import Session, session
 from . import crud, models, schemas
 from .database import SessionLocal, engine
-
+from .dependencies import get_db
+from .routers import customer
 
 models.Base.metadata.create_all(bind=engine)
 
-
 app = FastAPI()
+app.include_router(customer.router)
 
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.post("/restaurant/", response_model=schemas.Restaurant)
+def create_restaurant(restaurant: schemas.RestaurantCreate, db: Session = Depends(get_db)):
+
+    # uniform the name to lower case
+    restaurant.name = restaurant.name.lower()
+
+    return crud.create_restaurant(db, restaurant)
 
 
-@app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+@app.get("/restaurant/", response_model=List[schemas.Restaurant])
+def get_all_restaurants(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+
+    return crud.get_all_restaurants(db, skip, limit)
 
 
-@app.get("/users/", response_model=List[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
+@app.get("/restaurant/{name}", response_model=List[schemas.Restaurant])
+def get_restaurant(name: str, db: Session = Depends(get_db)):
+
+    db_restaurant = crud.get_restaurant_by_name(db, name.lower())
+
+    return db_restaurant
 
 
-@app.get("/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+@app.post("/restaurant/menu_item/", response_model=schemas.MenuItem)
+def create_menu_item(menu_item: schemas.MenuItemCreate, db: Session = Depends(get_db)):
+
+    return crud.create_menu_item(db, menu_item)
 
 
-@app.post("/users/{user_id}/items/", response_model=schemas.Item)
-def create_item_for_user(
-    user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
-):
-    return crud.create_user_item(db=db, item=item, user_id=user_id)
+@app.get("/restaurant/menu_item/{restaurant_id}", response_model=List[schemas.MenuItem])
+def get_all_menu_items_by_restaurant_id(restaurant_id: int, db: Session = Depends(get_db)):
+
+    if crud.get_restaurant(db, restaurant_id) is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    db_menu_items = crud.get_menu_items_for_restaurant(db, restaurant_id)
+
+    return db_menu_items
 
 
-@app.get("/items/", response_model=List[schemas.Item])
-def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = crud.get_items(db, skip=skip, limit=limit)
-    return items
+@app.post("/order_item/", response_model=schemas.OrderItem)
+def create_order_item(order_item: schemas.OrderItemCreate, db: Session = Depends(get_db)):
+
+    # Will return a OrderItem includes price
+    db_order_item = crud.create_order_item(db, order_item)
+
+    # Will also update the cart price
+    db_cart_to_update = crud.update_cart_total_price(db, order_item.cart_id)
+
+    return db_order_item
+
+
+@app.delete("/order_item/{order_id}", response_model=schemas.Cart)
+def delete_order_item(order_id: int, db: Session = Depends(get_db)):
+
+    updated_cart = crud.delete_order_item(db, order_id)
+    if updated_cart is None:
+        raise HTTPException(status_code=404, detail="No order item found")
+
+    # will return the updated cart with new total price
+    return updated_cart
+
+# @app.post("/customers/{user_id}/items/", response_model=schemas.Item)
+# def create_item_for_user(
+#     user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
+# ):
+#     return crud.create_user_item(db=db, item=item, user_id=user_id)
+
+
+# @app.get("/items/", response_model=List[schemas.Item])
+# def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+#     items = crud.get_items(db, skip=skip, limit=limit)
+#     return items

@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.elements import ColumnElement
 from .database import Base
 
 
@@ -12,17 +13,17 @@ class Customer(Base):
     last_name = Column(String(24))
     hashed_password = Column(String(32))
     enabled = Column(Boolean, default=True)
-    cart_id = Column(Integer, ForeignKey("cart.id"))
 
     cart = relationship("Cart", back_populates="customer")
 
 
-class Item(Base):
+class Cart(Base):
 
     __tablename__ = "cart"
 
     id = Column(Integer, primary_key=True, index=True)
-    total_price = Column(Float(32))
+    total_price = Column(Float(32), default=0, nullable=False)
+    customer_email = Column(String(32), ForeignKey("customer.email"))
 
     customer = relationship("Customer", back_populates="cart")
 
