@@ -1,10 +1,6 @@
-from typing import List
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy import schema
-from sqlalchemy.orm import Session, session
-from . import crud, models, schemas
-from .database import SessionLocal, engine
-from .dependencies import get_db
+from fastapi import FastAPI
+from .db import models
+from .db.database import engine
 from .routers import customer, restaurant, order_item
 
 models.Base.metadata.create_all(bind=engine)

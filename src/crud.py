@@ -1,8 +1,6 @@
-from os import name
-from sqlalchemy import schema
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import mode
-from . import models, schemas
+from . import schemas
+from .db import models
 
 '''
 Customer
@@ -23,7 +21,8 @@ def create_customer(db: Session, customer: schemas.CustomerCreate):
 
     fake_hashed_password = customer.password + "funnyhashed"
     db_user = models.Customer(
-        email=customer.email, hashed_password=fake_hashed_password)
+        email=customer.email, first_name=customer.first_name,
+        last_name=customer.last_name, hashed_password=fake_hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
