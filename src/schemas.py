@@ -1,4 +1,3 @@
-from os import name
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -35,6 +34,8 @@ Validation and schema for Customer
 class CustomerBase(BaseModel):
 
     email: str
+    first_name: Optional[str]
+    last_name: Optional[str]
 
 
 class CustomerCreate(CustomerBase):
@@ -44,8 +45,6 @@ class CustomerCreate(CustomerBase):
 
 class Customer(CustomerBase):
 
-    first_name: Optional[str]
-    last_name: Optional[str]
     enabled: bool
 
     class Config:
