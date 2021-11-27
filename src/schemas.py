@@ -2,6 +2,15 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
 '''
 Validation and schema for Cart
 '''

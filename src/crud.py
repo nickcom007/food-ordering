@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from . import schemas
 from .db import models
-
+from .security import pwd_hash
 '''
 Customer
 '''
@@ -19,10 +19,10 @@ def get_customers(db: Session, skip: int = 0, limit: int = 100):
 
 def create_customer(db: Session, customer: schemas.CustomerCreate):
 
-    fake_hashed_password = customer.password + "funnyhashed"
+    hashed_password = pwd_hash.get_password_hash(customer.password)
     db_user = models.Customer(
         email=customer.email, first_name=customer.first_name,
-        last_name=customer.last_name, hashed_password=fake_hashed_password)
+        last_name=customer.last_name, hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

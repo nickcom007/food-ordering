@@ -10,7 +10,7 @@ class Customer(Base):
     email = Column(String(32), primary_key=True, index=True)
     first_name = Column(String(24))
     last_name = Column(String(24))
-    hashed_password = Column(String(32))
+    hashed_password = Column(String(64))
     enabled = Column(Boolean, default=True)
 
     cart = relationship("Cart", back_populates="customer")

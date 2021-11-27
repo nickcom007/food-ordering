@@ -8,12 +8,14 @@ from .. import crud
 '''
 Contains all RESTful APIs for Customer and associated Cart operation
 '''
+
+
 router = APIRouter(
     prefix="/customers"
 )
 
 
-@router.post("/", response_model=schemas.Customer, tags=['customers'])
+@router.post("/signup", response_model=schemas.Customer, tags=['customers'])
 def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
     db_user = crud.get_customer(db, email=customer.email)
     if db_user:
